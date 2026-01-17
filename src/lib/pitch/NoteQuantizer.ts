@@ -7,7 +7,7 @@ const A4_MIDI = 69;
 export class NoteQuantizer {
 	// Tuned for untrained singers - very forgiving
 	private readonly minStableDuration = 0.18; // 180ms minimum note duration
-	private readonly minClarity = 0.02; // minimum signal clarity
+	private readonly minClarity = 0.01; // minimum signal clarity - very sensitive for mobile
 	private readonly confirmationFrames = 5; // frames needed to confirm note change
 
 	private currentNoteStart: number | null = null;

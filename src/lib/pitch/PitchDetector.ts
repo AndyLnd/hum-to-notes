@@ -16,8 +16,8 @@ export class PitchDetector {
 	constructor(sampleRate: number) {
 		this.detectPitch = YIN({
 			sampleRate,
-			threshold: 0.15, // Lower threshold = more sensitive to quiet signals
-			probabilityThreshold: 0.2 // Lower = accepts less certain pitches
+			threshold: 0.1, // Very sensitive to quiet signals
+			probabilityThreshold: 0.1 // Accept uncertain pitches
 		});
 	}
 
@@ -43,7 +43,7 @@ export class PitchDetector {
 		const clarity = this.calculateClarity(audioData);
 
 		// Apply note-based stabilization
-		if (medianFrequency !== null && clarity > 0.02) {
+		if (medianFrequency !== null && clarity > 0.01) {
 			const newMidiNote = this.frequencyToMidi(medianFrequency);
 
 			if (this.currentMidiNote === null) {
@@ -132,8 +132,8 @@ export class PitchDetector {
 			sum += audioData[i] * audioData[i];
 		}
 		const rms = Math.sqrt(sum / audioData.length);
-		// Normalize to 0-1 range - higher multiplier for better sensitivity
-		return Math.min(1, rms * 80);
+		// Normalize to 0-1 range - high multiplier for mobile sensitivity
+		return Math.min(1, rms * 150);
 	}
 
 	reset(): void {
