@@ -13,7 +13,7 @@ class AudioState {
 	abcNotation = $state<string>('');
 	error = $state<string | null>(null);
 	detectedBpm = $state<number>(120);
-	quantizeEnabled = $state<boolean>(true);
+	quantizeEnabled = $state<boolean>(false);
 
 	// Playback state
 	isPlaying = $state(false);
