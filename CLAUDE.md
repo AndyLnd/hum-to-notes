@@ -65,6 +65,9 @@ All note start times are normalized to 0:
 - Sharps use caret: C# = '^C'
 - Duration suffixes: '' = 1/8, '2' = 1/4, '4' = 1/2, '8' = whole
 
+### Playback Sync
+ABC notation rounds durations to standard note lengths (eighth, quarter, etc.), causing the ABC playback duration to differ from the piano roll's actual note durations. The playhead uses a scale factor (`pianoRollDuration / abcDuration`) to keep the indicator in sync with the audio.
+
 ### Known Quirks
 - Node 20.19+ or 22.12+ required (`.npmrc` has `engine-strict=true`). Using nvm with `default` alias set to 22.
 - SVG staff notation needs explicit CSS for colors (was white-on-white)

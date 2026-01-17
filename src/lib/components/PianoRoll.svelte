@@ -16,6 +16,23 @@
 		audioState.stopPlayback();
 	});
 
+	// Calculate ABC playback duration based on how AbcGenerator converts durations
+	function getAbcPlaybackDuration(notes: typeof audioState.detectedNotes, bpm: number): number {
+		const eighthNoteDuration = 60 / bpm / 2;
+		let totalEighths = 0;
+
+		for (const note of notes) {
+			const relativeLength = note.duration / eighthNoteDuration;
+			// Match AbcGenerator's durationToEighths logic
+			if (relativeLength <= 1.5) totalEighths += 1;
+			else if (relativeLength <= 3) totalEighths += 2;
+			else if (relativeLength <= 6) totalEighths += 4;
+			else totalEighths += 8;
+		}
+
+		return totalEighths * eighthNoteDuration;
+	}
+
 	async function playMelody() {
 		if (!abcjs || !audioState.abcNotation) return;
 
@@ -40,17 +57,22 @@
 			await synth.prime();
 
 			synthControl = synth;
-			audioState.startPlayback();
+
+			// Calculate the scale factor between ABC duration and piano roll duration
+			const abcDuration = getAbcPlaybackDuration(audioState.detectedNotes, audioState.detectedBpm);
+			const lastNote = audioState.detectedNotes[audioState.detectedNotes.length - 1];
+			const pianoRollDuration = lastNote.startTime + lastNote.duration;
+			const scaleFactor = pianoRollDuration / abcDuration;
+
+			audioState.startPlaybackWithScale(scaleFactor);
 
 			synth.start();
 
-			// Stop synth when playback ends
-			const lastNote = audioState.detectedNotes[audioState.detectedNotes.length - 1];
-			const firstNote = audioState.detectedNotes[0];
-			const totalDuration = (lastNote.startTime + lastNote.duration) - firstNote.startTime;
+			// Stop synth when ABC playback ends
 			setTimeout(() => {
 				synthControl = null;
-			}, totalDuration * 1000 + 500);
+				audioState.stopPlayback();
+			}, abcDuration * 1000 + 100);
 		} catch (err) {
 			console.error('Playback error:', err);
 			audioState.stopPlayback();

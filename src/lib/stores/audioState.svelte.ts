@@ -28,6 +28,7 @@ class AudioState {
 	private recordingStartTime: number = 0;
 	private playbackAnimationId: number | null = null;
 	private playbackStartTime: number = 0;
+	private playbackScaleFactor: number = 1;
 
 	constructor() {
 		this.abcGenerator = new AbcGenerator();
@@ -167,9 +168,14 @@ class AudioState {
 	}
 
 	startPlayback(): void {
+		this.startPlaybackWithScale(1);
+	}
+
+	startPlaybackWithScale(scaleFactor: number): void {
 		if (this.isPlaying || this.detectedNotes.length === 0) return;
 
 		this.isPlaying = true;
+		this.playbackScaleFactor = scaleFactor;
 		// Notes are normalized to start at 0, so playback starts at 0
 		this.playbackPosition = 0;
 		this.playbackStartTime = performance.now();
@@ -189,8 +195,8 @@ class AudioState {
 		if (!this.isPlaying || this.detectedNotes.length === 0) return;
 
 		const elapsed = (performance.now() - this.playbackStartTime) / 1000;
-		// Notes are normalized to start at 0, so position is just elapsed time
-		this.playbackPosition = elapsed;
+		// Scale elapsed time to match piano roll duration
+		this.playbackPosition = elapsed * this.playbackScaleFactor;
 
 		// Calculate total duration
 		const lastNote = this.detectedNotes[this.detectedNotes.length - 1];
