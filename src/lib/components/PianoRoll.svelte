@@ -5,6 +5,7 @@
 	let abcjs: typeof import('abcjs') | null = $state(null);
 	let synthControl: any = $state(null);
 	let isMobile = $state(false);
+	let audioContext: AudioContext | null = null;
 
 	onMount(async () => {
 		abcjs = await import('abcjs');
@@ -51,12 +52,22 @@
 		}
 
 		try {
+			// Mobile browsers require AudioContext to be created/resumed on user gesture
+			const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+			if (!audioContext && AudioContextClass) {
+				audioContext = new AudioContextClass();
+			}
+			if (audioContext && audioContext.state === 'suspended') {
+				await audioContext.resume();
+			}
+
 			// Create a temporary visual object for the synth
 			const visualObj = abcjs.renderAbc('*', audioState.abcNotation)[0];
 
 			const synth = new abcjs.synth.CreateSynth();
 			await synth.init({
 				visualObj,
+				audioContext: audioContext || undefined,
 				options: {
 					soundFontUrl: 'https://paulrosen.github.io/midi-js-soundfonts/FluidR3_GM/',
 					program: 73 // Flute sound
