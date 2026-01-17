@@ -43,10 +43,7 @@
 	}
 
 	async function playMelody() {
-		if (!abcjs || !audioState.abcNotation) {
-			console.log('[Audio Debug] Missing abcjs or notation', { abcjs: !!abcjs, notation: !!audioState.abcNotation });
-			return;
-		}
+		if (!abcjs || !audioState.abcNotation) return;
 
 		if (audioState.isPlaying) {
 			synthControl?.stop();
@@ -57,29 +54,17 @@
 		try {
 			// Mobile browsers require AudioContext to be created/resumed on user gesture
 			const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-			console.log('[Audio Debug] AudioContext class:', AudioContextClass ? 'found' : 'NOT FOUND');
-
 			if (!audioContext && AudioContextClass) {
 				audioContext = new AudioContextClass();
-				console.log('[Audio Debug] Created new AudioContext, state:', audioContext.state);
 			}
-
-			if (audioContext) {
-				console.log('[Audio Debug] AudioContext state before resume:', audioContext.state);
-				if (audioContext.state === 'suspended') {
-					await audioContext.resume();
-					console.log('[Audio Debug] AudioContext state after resume:', audioContext.state);
-				}
-				console.log('[Audio Debug] AudioContext sampleRate:', audioContext.sampleRate);
+			if (audioContext && audioContext.state === 'suspended') {
+				await audioContext.resume();
 			}
 
 			// Create a temporary visual object for the synth
 			const visualObj = abcjs.renderAbc('*', audioState.abcNotation)[0];
-			console.log('[Audio Debug] Visual object created:', !!visualObj);
 
 			const synth = new abcjs.synth.CreateSynth();
-			console.log('[Audio Debug] Synth created, calling init...');
-
 			await synth.init({
 				visualObj,
 				audioContext: audioContext || undefined,
@@ -88,10 +73,7 @@
 					program: 73 // Flute sound
 				}
 			});
-			console.log('[Audio Debug] Synth init complete');
-
 			await synth.prime();
-			console.log('[Audio Debug] Synth prime complete');
 
 			synthControl = synth;
 
@@ -100,13 +82,10 @@
 			const lastNote = audioState.detectedNotes[audioState.detectedNotes.length - 1];
 			const pianoRollDuration = lastNote.startTime + lastNote.duration;
 			const scaleFactor = pianoRollDuration / abcDuration;
-			console.log('[Audio Debug] Duration - ABC:', abcDuration, 'PianoRoll:', pianoRollDuration, 'Scale:', scaleFactor);
 
 			audioState.startPlaybackWithScale(scaleFactor);
 
-			console.log('[Audio Debug] Calling synth.start()...');
 			synth.start();
-			console.log('[Audio Debug] synth.start() called');
 
 			// Stop synth when ABC playback ends
 			setTimeout(() => {
@@ -114,8 +93,7 @@
 				audioState.stopPlayback();
 			}, abcDuration * 1000 + 100);
 		} catch (err) {
-			console.error('[Audio Debug] Playback error:', err);
-			console.error('[Audio Debug] Error details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+			console.error('Playback error:', err);
 			audioState.stopPlayback();
 		}
 	}
