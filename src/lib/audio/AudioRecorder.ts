@@ -17,7 +17,7 @@ export class AudioRecorder {
 				audio: {
 					echoCancellation: false,
 					noiseSuppression: false,
-					autoGainControl: false
+					autoGainControl: true // Enable AGC for better sensitivity on mobile
 				}
 			});
 

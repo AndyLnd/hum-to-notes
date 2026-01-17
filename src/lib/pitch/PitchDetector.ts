@@ -16,8 +16,8 @@ export class PitchDetector {
 	constructor(sampleRate: number) {
 		this.detectPitch = YIN({
 			sampleRate,
-			threshold: 0.2, // Higher threshold = less sensitive to noise
-			probabilityThreshold: 0.3
+			threshold: 0.15, // Lower threshold = more sensitive to quiet signals
+			probabilityThreshold: 0.2 // Lower = accepts less certain pitches
 		});
 	}
 
@@ -132,8 +132,8 @@ export class PitchDetector {
 			sum += audioData[i] * audioData[i];
 		}
 		const rms = Math.sqrt(sum / audioData.length);
-		// Normalize to 0-1 range
-		return Math.min(1, rms * 50);
+		// Normalize to 0-1 range - higher multiplier for better sensitivity
+		return Math.min(1, rms * 80);
 	}
 
 	reset(): void {
