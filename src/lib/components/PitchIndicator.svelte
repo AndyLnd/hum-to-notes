@@ -23,19 +23,19 @@
 </script>
 
 {#if audioState.status === 'recording'}
-	<div class="bg-gray-800 rounded-lg p-6 text-center">
-		<div class="text-6xl font-bold text-white mb-2">
+	<div class="bg-gray-800 rounded-lg p-4 sm:p-6 text-center">
+		<div class="text-4xl sm:text-6xl font-bold text-white mb-1 sm:mb-2">
 			{noteDisplay.note}
 		</div>
-		<div class="text-gray-400 text-lg">
+		<div class="text-gray-400 text-base sm:text-lg">
 			{noteDisplay.frequency}
 		</div>
 		{#if noteDisplay.cents}
-			<div class="text-sm text-gray-500 mt-1">
+			<div class="text-xs sm:text-sm text-gray-500 mt-1">
 				{noteDisplay.cents} cents
 			</div>
 		{/if}
-		<div class="mt-4">
+		<div class="mt-3 sm:mt-4">
 			<div class="h-2 bg-gray-700 rounded-full overflow-hidden">
 				<div
 					class="h-full bg-green-500 transition-all duration-75"

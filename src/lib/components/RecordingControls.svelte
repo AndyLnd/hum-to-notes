@@ -14,11 +14,11 @@
 	}
 </script>
 
-<div class="flex gap-4 items-center">
+<div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center w-full sm:w-auto">
 	{#if audioState.status === 'idle' || audioState.status === 'complete'}
 		<button
 			onclick={handleRecord}
-			class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-full font-semibold transition-colors flex items-center gap-2"
+			class="w-full sm:w-auto min-h-[48px] px-8 py-3 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white rounded-full font-semibold transition-colors flex items-center justify-center gap-2 text-lg"
 		>
 			<span class="w-3 h-3 bg-white rounded-full"></span>
 			Record
@@ -28,7 +28,7 @@
 	{#if audioState.status === 'recording'}
 		<button
 			onclick={handleStop}
-			class="px-6 py-3 bg-gray-700 hover:bg-gray-800 text-white rounded-full font-semibold transition-colors flex items-center gap-2"
+			class="w-full sm:w-auto min-h-[48px] px-8 py-3 bg-gray-700 hover:bg-gray-800 active:bg-gray-900 text-white rounded-full font-semibold transition-colors flex items-center justify-center gap-2 text-lg"
 		>
 			<span class="w-3 h-3 bg-white"></span>
 			Stop
@@ -46,7 +46,7 @@
 	{#if audioState.status === 'complete' && audioState.detectedNotes.length > 0}
 		<button
 			onclick={handleReset}
-			class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded font-medium transition-colors"
+			class="w-full sm:w-auto min-h-[44px] px-6 py-2 bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white rounded font-medium transition-colors"
 		>
 			Clear
 		</button>
@@ -54,5 +54,5 @@
 </div>
 
 {#if audioState.error}
-	<p class="mt-4 text-red-400">{audioState.error}</p>
+	<p class="mt-4 text-red-400 text-center">{audioState.error}</p>
 {/if}

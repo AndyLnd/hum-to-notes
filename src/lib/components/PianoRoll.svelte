@@ -4,9 +4,17 @@
 
 	let abcjs: typeof import('abcjs') | null = $state(null);
 	let synthControl: any = $state(null);
+	let isMobile = $state(false);
 
 	onMount(async () => {
 		abcjs = await import('abcjs');
+		// Check if mobile on mount and resize
+		const checkMobile = () => {
+			isMobile = window.innerWidth < 640;
+		};
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+		return () => window.removeEventListener('resize', checkMobile);
 	});
 
 	onDestroy(() => {
@@ -80,8 +88,11 @@
 	}
 
 	const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-	const KEY_HEIGHT = 24;
-	const PIXELS_PER_SECOND = 100;
+
+	// Responsive sizing
+	let keyHeight = $derived(isMobile ? 20 : 24);
+	let keyWidth = $derived(isMobile ? 44 : 60);
+	let pixelsPerSecond = $derived(isMobile ? 80 : 100);
 
 	// Calculate the range of notes to display
 	let noteRange = $derived.by(() => {
@@ -121,16 +132,16 @@
 		return lastNote.startTime + lastNote.duration + 0.5;
 	});
 
-	let rollWidth = $derived(totalDuration * PIXELS_PER_SECOND);
+	let rollWidth = $derived(totalDuration * pixelsPerSecond);
 
 	// Playback position in pixels
-	let playheadPosition = $derived(audioState.playbackPosition * PIXELS_PER_SECOND);
+	let playheadPosition = $derived(audioState.playbackPosition * pixelsPerSecond);
 
 	function getNoteStyle(note: typeof audioState.detectedNotes[0]) {
-		const top = (noteRange.max - note.midiNumber) * KEY_HEIGHT;
-		const left = note.startTime * PIXELS_PER_SECOND;
-		const width = Math.max(note.duration * PIXELS_PER_SECOND, 10);
-		return `top: ${top}px; left: ${left}px; width: ${width}px; height: ${KEY_HEIGHT - 2}px;`;
+		const top = (noteRange.max - note.midiNumber) * keyHeight;
+		const left = note.startTime * pixelsPerSecond;
+		const width = Math.max(note.duration * pixelsPerSecond, 10);
+		return `top: ${top}px; left: ${left}px; width: ${width}px; height: ${keyHeight - 2}px;`;
 	}
 
 	function getNoteColor(note: typeof audioState.detectedNotes[0]) {
@@ -154,34 +165,38 @@
 </script>
 
 {#if audioState.status === 'complete' && audioState.detectedNotes.length > 0}
-	<div class="bg-gray-800 rounded-lg p-6">
-		<div class="flex items-center justify-between mb-4 flex-wrap gap-4">
-			<h2 class="text-lg font-semibold text-white">Piano Roll</h2>
+	<div class="bg-gray-800 rounded-lg p-4 sm:p-6">
+		<!-- Header with controls -->
+		<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+			<h2 class="text-base sm:text-lg font-semibold text-white">Piano Roll</h2>
 
-			<div class="flex items-center gap-4">
+			<!-- Controls - stack on mobile -->
+			<div class="flex flex-wrap items-center gap-2 sm:gap-4">
 				<!-- Tempo controls -->
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-1 sm:gap-2">
 					<button
 						onclick={() => audioState.setBpm(audioState.detectedBpm - 5)}
-						class="w-8 h-8 bg-gray-700 hover:bg-gray-600 text-white rounded flex items-center justify-center"
+						class="w-9 h-9 sm:w-8 sm:h-8 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white rounded flex items-center justify-center text-lg"
 					>-</button>
-					<span class="text-white font-mono w-20 text-center">
+					<span class="text-white font-mono text-sm sm:text-base w-16 sm:w-20 text-center">
 						{audioState.detectedBpm} BPM
 					</span>
 					<button
 						onclick={() => audioState.setBpm(audioState.detectedBpm + 5)}
-						class="w-8 h-8 bg-gray-700 hover:bg-gray-600 text-white rounded flex items-center justify-center"
+						class="w-9 h-9 sm:w-8 sm:h-8 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white rounded flex items-center justify-center text-lg"
 					>+</button>
 				</div>
 
 				<!-- Quantize toggle -->
 				<button
 					onclick={() => audioState.toggleQuantize()}
-					class="px-3 py-1.5 rounded text-sm transition-colors"
+					class="min-h-[36px] px-3 py-1.5 rounded text-sm transition-colors"
 					class:bg-green-600={audioState.quantizeEnabled}
 					class:hover:bg-green-700={audioState.quantizeEnabled}
+					class:active:bg-green-800={audioState.quantizeEnabled}
 					class:bg-gray-600={!audioState.quantizeEnabled}
 					class:hover:bg-gray-500={!audioState.quantizeEnabled}
+					class:active:bg-gray-400={!audioState.quantizeEnabled}
 					class:text-white={true}
 				>
 					Quantize {audioState.quantizeEnabled ? 'ON' : 'OFF'}
@@ -190,7 +205,7 @@
 				<!-- Play button -->
 				<button
 					onclick={playMelody}
-					class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded font-medium transition-colors flex items-center gap-2"
+					class="min-h-[44px] min-w-[80px] px-4 py-2 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded font-medium transition-colors flex items-center justify-center gap-2"
 				>
 					{#if audioState.isPlaying}
 						<span class="w-3 h-3 bg-white"></span>
@@ -203,17 +218,18 @@
 			</div>
 		</div>
 
-		<div class="flex overflow-x-auto">
+		<!-- Piano roll with touch scrolling -->
+		<div class="flex overflow-x-auto touch-pan-x scrollbar-thin">
 			<!-- Piano keys -->
-			<div class="flex-shrink-0 border-r border-gray-600">
+			<div class="flex-shrink-0 border-r border-gray-600 sticky left-0 z-10 bg-gray-800">
 				{#each pianoKeys as key}
 					<div
-						class="flex items-center justify-end pr-2 text-xs font-mono border-b border-gray-700"
+						class="flex items-center justify-end pr-1 sm:pr-2 text-[10px] sm:text-xs font-mono border-b border-gray-700"
 						class:bg-gray-900={key.isBlack}
 						class:text-gray-400={key.isBlack}
 						class:bg-gray-700={!key.isBlack}
 						class:text-white={!key.isBlack}
-						style="height: {KEY_HEIGHT}px; width: 60px;"
+						style="height: {keyHeight}px; width: {keyWidth}px;"
 					>
 						{key.displayName}{key.octave}
 					</div>
@@ -231,7 +247,7 @@
 							class:border-gray-600={key.isBlack}
 							class:bg-gray-800={!key.isBlack}
 							class:bg-gray-850={key.isBlack}
-							style="top: {i * KEY_HEIGHT}px; height: {KEY_HEIGHT}px;"
+							style="top: {i * keyHeight}px; height: {keyHeight}px;"
 						></div>
 					{/each}
 
@@ -239,18 +255,18 @@
 					{#each Array(Math.ceil(totalDuration)) as _, second}
 						<div
 							class="absolute top-0 bottom-0 border-l border-gray-600"
-							style="left: {second * PIXELS_PER_SECOND}px;"
+							style="left: {second * pixelsPerSecond}px;"
 						>
-							<span class="absolute -top-5 left-1 text-xs text-gray-500">{second}s</span>
+							<span class="absolute -top-5 left-1 text-[10px] sm:text-xs text-gray-500">{second}s</span>
 						</div>
 					{/each}
 				</div>
 
 				<!-- Notes -->
-				<div class="relative" style="width: {rollWidth}px; height: {pianoKeys.length * KEY_HEIGHT}px;">
+				<div class="relative" style="width: {rollWidth}px; height: {pianoKeys.length * keyHeight}px;">
 					{#each audioState.detectedNotes as note, i}
 						<div
-							class="absolute rounded {getNoteColor(note)} opacity-90 flex items-center justify-center text-xs text-white font-bold shadow-lg"
+							class="absolute rounded {getNoteColor(note)} opacity-90 flex items-center justify-center text-[10px] sm:text-xs text-white font-bold shadow-lg"
 							style={getNoteStyle(note)}
 						>
 							{note.note}{note.octave}
@@ -270,11 +286,11 @@
 			</div>
 		</div>
 
-		<!-- Legend -->
-		<div class="mt-4 flex flex-wrap gap-2 text-xs">
-			<span class="text-gray-400">Notes:</span>
+		<!-- Legend - scrollable on mobile -->
+		<div class="mt-3 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-2 text-[10px] sm:text-xs overflow-x-auto">
+			<span class="text-gray-400 flex-shrink-0">Notes:</span>
 			{#each audioState.detectedNotes as note, i}
-				<span class="px-2 py-1 rounded {getNoteColor(note)} text-white">
+				<span class="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded {getNoteColor(note)} text-white flex-shrink-0">
 					{i + 1}. {note.note}{note.octave}
 				</span>
 			{/each}
@@ -288,5 +304,21 @@
 	}
 	.playhead {
 		box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.6);
+	}
+	/* Custom scrollbar for touch devices */
+	.scrollbar-thin {
+		scrollbar-width: thin;
+		-webkit-overflow-scrolling: touch;
+	}
+	.scrollbar-thin::-webkit-scrollbar {
+		height: 6px;
+	}
+	.scrollbar-thin::-webkit-scrollbar-track {
+		background: rgb(55, 65, 81);
+		border-radius: 3px;
+	}
+	.scrollbar-thin::-webkit-scrollbar-thumb {
+		background: rgb(107, 114, 128);
+		border-radius: 3px;
 	}
 </style>
