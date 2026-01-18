@@ -6,7 +6,6 @@ export class AudioRecorder {
 	private dataArray: Float32Array<ArrayBuffer> | null = null;
 	private isRecording = false;
 
-	readonly sampleRate = 44100;
 	readonly fftSize = 2048;
 
 	async start(): Promise<void> {
@@ -21,7 +20,9 @@ export class AudioRecorder {
 				}
 			});
 
-			this.audioContext = new AudioContext({ sampleRate: this.sampleRate });
+			// Use device's native sample rate instead of forcing 44100
+			// Mobile devices often use 48000Hz and forcing a different rate causes issues
+			this.audioContext = new AudioContext();
 			this.analyser = this.audioContext.createAnalyser();
 			this.analyser.fftSize = this.fftSize;
 			this.analyser.smoothingTimeConstant = 0;
@@ -76,6 +77,6 @@ export class AudioRecorder {
 	}
 
 	getSampleRate(): number {
-		return this.audioContext?.sampleRate ?? this.sampleRate;
+		return this.audioContext?.sampleRate ?? 44100;
 	}
 }
